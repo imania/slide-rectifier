@@ -87,8 +87,8 @@ function setImage(canvas, name) {
   els.resultCanvas.height = 1;
   els.downloadBtn.disabled = true;
 
-  els.sourceMeta.textContent = `${name} · ${canvas.width.toLocaleString("ko-KR")} x ${canvas.height.toLocaleString("ko-KR")}`;
-  els.resultMeta.textContent = "대기";
+  els.sourceMeta.textContent = `${name} · ${canvas.width.toLocaleString("en-US")} x ${canvas.height.toLocaleString("en-US")}`;
+  els.resultMeta.textContent = "Waiting";
 
   if (!applySampleFrame()) applyDefaultFrame();
   drawSource();
@@ -108,12 +108,12 @@ function resetAll() {
   els.sourceCanvas.height = 1;
   els.resultCanvas.width = 1;
   els.resultCanvas.height = 1;
-  els.sourceMeta.textContent = "이미지 없음";
-  els.resultMeta.textContent = "대기";
+  els.sourceMeta.textContent = "No image";
+  els.resultMeta.textContent = "Waiting";
   els.outputWidth.value = "";
   els.outputHeight.value = "";
   els.downloadBtn.disabled = true;
-  setStatus("이미지를 불러오세요.");
+  setStatus("Load an image to begin.");
   drawSource();
   updatePointList();
 }
@@ -130,7 +130,7 @@ function applyDefaultFrame() {
     { x: insetX, y: height - insetY }
   ];
   state.activeIndex = -1;
-  setStatus("네 꼭짓점을 슬라이드 모서리에 맞추세요.");
+  setStatus("Drag the four points to the slide corners.");
 }
 
 function applySampleFrame() {
@@ -144,7 +144,7 @@ function applySampleFrame() {
     { x: 63 * scaleX, y: 773 * scaleY }
   ];
   state.activeIndex = -1;
-  setStatus("샘플 선택 영역 준비됨");
+  setStatus("Sample selection is ready.");
   return true;
 }
 
@@ -153,7 +153,7 @@ function clearPoints() {
   state.activeIndex = -1;
   state.outputReady = false;
   els.downloadBtn.disabled = true;
-  setStatus("원본에서 네 꼭짓점을 선택하세요.");
+  setStatus("Select four corners on the source image.");
   drawSource();
   updatePointList();
 }
@@ -263,7 +263,7 @@ function handlePointerDown(event) {
   }
 
   els.sourceCanvas.setPointerCapture(event.pointerId);
-  setStatus(state.points.length === 4 ? "선택 영역 준비됨" : `${state.points.length}/4`);
+  setStatus(state.points.length === 4 ? "Selection is ready." : `${state.points.length}/4`);
   drawSource();
   updatePointList();
   updateAutoSize();
@@ -313,14 +313,14 @@ function updatePointList() {
     xInput.min = "0";
     xInput.max = String(els.sourceCanvas.width);
     xInput.value = String(Math.round(point.x));
-    xInput.ariaLabel = `${index + 1}번 X`;
+    xInput.ariaLabel = `Point ${index + 1} X`;
 
     const yInput = document.createElement("input");
     yInput.type = "number";
     yInput.min = "0";
     yInput.max = String(els.sourceCanvas.height);
     yInput.value = String(Math.round(point.y));
-    yInput.ariaLabel = `${index + 1}번 Y`;
+    yInput.ariaLabel = `Point ${index + 1} Y`;
 
     xInput.addEventListener("change", () => {
       point.x = Number(xInput.value) || 0;
@@ -479,7 +479,7 @@ function sampleBilinear(data, width, height, x, y) {
 
 function rectifySelection() {
   if (!state.imageCanvas || state.points.length !== 4) {
-    setStatus("네 꼭짓점이 필요합니다.");
+    setStatus("Four corner points are required.");
     return;
   }
 
@@ -513,8 +513,8 @@ function rectifySelection() {
   resultCtx.putImageData(output, 0, 0);
   state.outputReady = true;
   els.downloadBtn.disabled = false;
-  els.resultMeta.textContent = `${width.toLocaleString("ko-KR")} x ${height.toLocaleString("ko-KR")}`;
-  setStatus("변환 완료");
+  els.resultMeta.textContent = `${width.toLocaleString("en-US")} x ${height.toLocaleString("en-US")}`;
+  setStatus("Rectification complete.");
 }
 
 async function pasteImageFromClipboard() {
@@ -527,15 +527,15 @@ async function pasteImageFromClipboard() {
       await loadImageFile(new File([blob], "clipboard-image.png", { type: imageType }));
       return;
     }
-    setStatus("클립보드에 이미지가 없습니다.");
+    setStatus("No image found in the clipboard.");
   } catch {
-    setStatus("붙여넣기 권한을 확인하세요.");
+    setStatus("Check clipboard permission and try again.");
   }
 }
 
 async function captureScreenFrame() {
   if (!navigator.mediaDevices?.getDisplayMedia) {
-    setStatus("이 브라우저는 화면 캡처를 지원하지 않습니다.");
+    setStatus("This browser does not support screen capture.");
     return;
   }
 
@@ -556,7 +556,7 @@ async function captureScreenFrame() {
     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
     setImage(canvas, "screen-capture.png");
   } catch {
-    setStatus("캡처가 취소되었습니다.");
+    setStatus("Capture was canceled.");
   } finally {
     if (stream) stream.getTracks().forEach((track) => track.stop());
   }
@@ -582,7 +582,7 @@ function bindEvents() {
       const loaded = await loadImageFromUrl(SAMPLE_IMAGE, "presentation-sample.png");
       setImage(loaded.canvas, loaded.name);
     } catch {
-      setStatus("샘플 이미지를 열 수 없습니다.");
+      setStatus("Could not open the sample image.");
     }
   });
 
