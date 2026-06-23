@@ -14,72 +14,72 @@
       </div>
       <div class="header-actions">
         <input id="fileInput" type="file" accept="image/*" hidden>
-        <button id="sampleBtn" type="button" title="샘플 이미지">샘플</button>
-        <button id="openBtn" type="button" title="이미지 열기">열기</button>
-        <button id="pasteBtn" type="button" title="클립보드 이미지 붙여넣기">붙여넣기</button>
-        <button id="captureBtn" type="button" title="화면 캡처">캡처</button>
-        <button id="resetBtn" type="button" title="초기화">초기화</button>
+        <button id="sampleBtn" type="button" title="Load sample image">Sample</button>
+        <button id="openBtn" type="button" title="Open image">Open</button>
+        <button id="pasteBtn" type="button" title="Paste image from clipboard">Paste</button>
+        <button id="captureBtn" type="button" title="Capture screen">Capture</button>
+        <button id="resetBtn" type="button" title="Reset workspace">Reset</button>
       </div>
     </header>
 
     <main class="workspace">
-      <section class="source-panel" aria-label="원본">
+      <section class="source-panel" aria-label="Source">
         <div class="panel-head">
           <div>
-            <h2>원본</h2>
-            <p id="sourceMeta">이미지 없음</p>
+            <h2>Source</h2>
+            <p id="sourceMeta">No image</p>
           </div>
-          <div class="status" id="statusText">이미지를 불러오세요.</div>
+          <div class="status" id="statusText">Load an image to begin.</div>
         </div>
         <div class="canvas-frame source-frame">
-          <canvas id="sourceCanvas" aria-label="원본 이미지 선택 영역"></canvas>
+          <canvas id="sourceCanvas" aria-label="Source image selection area"></canvas>
         </div>
       </section>
 
-      <aside class="tool-panel" aria-label="도구">
+      <aside class="tool-panel" aria-label="Tools">
         <section class="controls">
-          <h2>선택</h2>
+          <h2>Selection</h2>
           <div class="point-list" id="pointList"></div>
           <div class="button-row">
-            <button id="clearPointsBtn" type="button">점 지우기</button>
-            <button id="autoFrameBtn" type="button">기본 영역</button>
+            <button id="clearPointsBtn" type="button">Clear Points</button>
+            <button id="autoFrameBtn" type="button">Default Frame</button>
           </div>
         </section>
 
         <section class="controls">
-          <h2>출력</h2>
+          <h2>Output</h2>
           <label>
-            <span>비율</span>
+            <span>Aspect Ratio</span>
             <select id="aspectMode">
-              <option value="auto">자동</option>
+              <option value="auto">Auto</option>
               <option value="16:9">16:9</option>
               <option value="4:3">4:3</option>
-              <option value="custom">직접 입력</option>
+              <option value="custom">Custom</option>
             </select>
           </label>
           <div class="size-grid">
             <label>
-              <span>너비</span>
+              <span>Width</span>
               <input id="outputWidth" type="number" min="64" max="5000" step="1">
             </label>
             <label>
-              <span>높이</span>
+              <span>Height</span>
               <input id="outputHeight" type="number" min="64" max="5000" step="1">
             </label>
           </div>
           <div class="button-row">
-            <button id="rectifyBtn" class="primary" type="button">변환</button>
-            <button id="downloadBtn" type="button" disabled>PNG 저장</button>
+            <button id="rectifyBtn" class="primary" type="button">Rectify</button>
+            <button id="downloadBtn" type="button" disabled>Save PNG</button>
           </div>
         </section>
 
-        <section class="result-panel" aria-label="결과">
+        <section class="result-panel" aria-label="Result">
           <div class="panel-head compact">
-            <h2>결과</h2>
-            <span id="resultMeta">대기</span>
+            <h2>Result</h2>
+            <span id="resultMeta">Waiting</span>
           </div>
           <div class="canvas-frame result-frame">
-            <canvas id="resultCanvas" aria-label="직사각형 변환 결과"></canvas>
+            <canvas id="resultCanvas" aria-label="Rectified image result"></canvas>
           </div>
         </section>
       </aside>
