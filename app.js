@@ -1,6 +1,7 @@
 const SAMPLE_IMAGE = "samples/presentation-sample.png?v=20260623-sample2";
 const MAX_SOURCE_SIDE = 2200;
 const MAX_AUTO_OUTPUT_SIDE = 1800;
+const DETECTION_MAX_SIDE = 420;
 
 const state = {
   imageCanvas: null,
@@ -25,6 +26,7 @@ const els = {
   statusText: document.querySelector("#statusText"),
   pointList: document.querySelector("#pointList"),
   clearPointsBtn: document.querySelector("#clearPointsBtn"),
+  autoDetectBtn: document.querySelector("#autoDetectBtn"),
   autoFrameBtn: document.querySelector("#autoFrameBtn"),
   aspectMode: document.querySelector("#aspectMode"),
   outputWidth: document.querySelector("#outputWidth"),
@@ -38,6 +40,11 @@ const resultCtx = els.resultCanvas.getContext("2d", { willReadFrequently: true }
 
 function setStatus(message) {
   els.statusText.textContent = message;
+}
+
+function invalidateResult() {
+  state.outputReady = false;
+  els.downloadBtn.disabled = true;
 }
 
 function createCanvas(width, height) {
@@ -130,6 +137,7 @@ function applyDefaultFrame() {
     { x: insetX, y: height - insetY }
   ];
   state.activeIndex = -1;
+  invalidateResult();
   setStatus("Drag the four points to the slide corners.");
 }
 
@@ -144,6 +152,7 @@ function applySampleFrame() {
     { x: 75 * scaleX, y: 604 * scaleY }
   ];
   state.activeIndex = -1;
+  invalidateResult();
   setStatus("Sample selection is ready.");
   return true;
 }
@@ -151,11 +160,188 @@ function applySampleFrame() {
 function clearPoints() {
   state.points = [];
   state.activeIndex = -1;
-  state.outputReady = false;
-  els.downloadBtn.disabled = true;
+  invalidateResult();
   setStatus("Select four corners on the source image.");
   drawSource();
   updatePointList();
+}
+
+function getDetectionCanvas() {
+  const scale = Math.min(1, DETECTION_MAX_SIDE / Math.max(state.imageCanvas.width, state.imageCanvas.height));
+  const width = Math.max(1, Math.round(state.imageCanvas.width * scale));
+  const height = Math.max(1, Math.round(state.imageCanvas.height * scale));
+  const canvas = createCanvas(width, height);
+  canvas.getContext("2d").drawImage(state.imageCanvas, 0, 0, width, height);
+  return { canvas, scale };
+}
+
+function getOtsuThreshold(histogram, total) {
+  let sum = 0;
+  for (let value = 0; value < 256; value += 1) sum += value * histogram[value];
+
+  let backgroundWeight = 0;
+  let backgroundSum = 0;
+  let maxVariance = -1;
+  let threshold = 128;
+
+  for (let value = 0; value < 256; value += 1) {
+    backgroundWeight += histogram[value];
+    if (!backgroundWeight) continue;
+
+    const foregroundWeight = total - backgroundWeight;
+    if (!foregroundWeight) break;
+
+    backgroundSum += value * histogram[value];
+    const backgroundMean = backgroundSum / backgroundWeight;
+    const foregroundMean = (sum - backgroundSum) / foregroundWeight;
+    const variance = backgroundWeight * foregroundWeight * (backgroundMean - foregroundMean) ** 2;
+
+    if (variance > maxVariance) {
+      maxVariance = variance;
+      threshold = value;
+    }
+  }
+
+  return threshold;
+}
+
+function buildBrightMask(imageData) {
+  const histogram = new Array(256).fill(0);
+  const luma = new Uint8Array(imageData.width * imageData.height);
+
+  for (let index = 0; index < luma.length; index += 1) {
+    const offset = index * 4;
+    const value = Math.round(
+      imageData.data[offset] * 0.299 +
+      imageData.data[offset + 1] * 0.587 +
+      imageData.data[offset + 2] * 0.114
+    );
+    luma[index] = value;
+    histogram[value] += 1;
+  }
+
+  const threshold = Math.max(95, Math.min(235, getOtsuThreshold(histogram, luma.length) + 8));
+  const mask = new Uint8Array(luma.length);
+
+  for (let index = 0; index < luma.length; index += 1) {
+    mask[index] = luma[index] >= threshold ? 1 : 0;
+  }
+
+  return mask;
+}
+
+function findLargestComponent(mask, width, height) {
+  const visited = new Uint8Array(mask.length);
+  let best = null;
+  const stack = [];
+
+  for (let start = 0; start < mask.length; start += 1) {
+    if (!mask[start] || visited[start]) continue;
+
+    let area = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    let tl = { score: Infinity, x: 0, y: 0 };
+    let tr = { score: -Infinity, x: 0, y: 0 };
+    let br = { score: -Infinity, x: 0, y: 0 };
+    let bl = { score: Infinity, x: 0, y: 0 };
+
+    stack.length = 0;
+    stack.push(start);
+    visited[start] = 1;
+
+    while (stack.length) {
+      const index = stack.pop();
+      const x = index % width;
+      const y = Math.floor(index / width);
+      area += 1;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+
+      const sum = x + y;
+      const diff = x - y;
+      if (sum < tl.score) tl = { score: sum, x, y };
+      if (diff > tr.score) tr = { score: diff, x, y };
+      if (sum > br.score) br = { score: sum, x, y };
+      if (diff < bl.score) bl = { score: diff, x, y };
+
+      const left = index - 1;
+      const right = index + 1;
+      const up = index - width;
+      const down = index + width;
+
+      if (x > 0 && mask[left] && !visited[left]) {
+        visited[left] = 1;
+        stack.push(left);
+      }
+      if (x < width - 1 && mask[right] && !visited[right]) {
+        visited[right] = 1;
+        stack.push(right);
+      }
+      if (y > 0 && mask[up] && !visited[up]) {
+        visited[up] = 1;
+        stack.push(up);
+      }
+      if (y < height - 1 && mask[down] && !visited[down]) {
+        visited[down] = 1;
+        stack.push(down);
+      }
+    }
+
+    const boxArea = (maxX - minX + 1) * (maxY - minY + 1);
+    const fillRatio = area / Math.max(1, boxArea);
+    const candidate = { area, fillRatio, points: [tl, tr, br, bl] };
+
+    if (!best || candidate.area > best.area) best = candidate;
+  }
+
+  return best;
+}
+
+function expandFromCenter(points, factor) {
+  const center = points.reduce(
+    (acc, point) => ({ x: acc.x + point.x / points.length, y: acc.y + point.y / points.length }),
+    { x: 0, y: 0 }
+  );
+
+  return points.map((point) => clampPoint({
+    x: center.x + (point.x - center.x) * factor,
+    y: center.y + (point.y - center.y) * factor
+  }));
+}
+
+function autoDetectCorners() {
+  if (!state.imageCanvas) {
+    setStatus("Load an image before auto detection.");
+    return;
+  }
+
+  const { canvas, scale } = getDetectionCanvas();
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const mask = buildBrightMask(imageData);
+  const component = findLargestComponent(mask, canvas.width, canvas.height);
+  const minArea = canvas.width * canvas.height * 0.04;
+
+  if (!component || component.area < minArea || component.fillRatio < 0.16) {
+    setStatus("Auto detection could not find a large slide area.");
+    return;
+  }
+
+  state.points = expandFromCenter(
+    component.points.map((point) => ({ x: point.x / scale, y: point.y / scale })),
+    1.015
+  );
+  state.activeIndex = -1;
+  invalidateResult();
+  setStatus("Auto-detected corners. Drag points to fine-tune.");
+  drawSource();
+  updatePointList();
+  updateAutoSize();
 }
 
 function drawSource() {
@@ -272,8 +458,7 @@ function handlePointerDown(event) {
 function handlePointerMove(event) {
   if (state.draggingIndex < 0 || !state.imageCanvas) return;
   state.points[state.draggingIndex] = clampPoint(canvasPointFromEvent(event));
-  state.outputReady = false;
-  els.downloadBtn.disabled = true;
+  invalidateResult();
   drawSource();
   updatePointList();
   updateAutoSize();
@@ -602,6 +787,7 @@ function bindEvents() {
   els.captureBtn.addEventListener("click", captureScreenFrame);
   els.resetBtn.addEventListener("click", resetAll);
   els.clearPointsBtn.addEventListener("click", clearPoints);
+  els.autoDetectBtn.addEventListener("click", autoDetectCorners);
   els.autoFrameBtn.addEventListener("click", () => {
     applyDefaultFrame();
     drawSource();

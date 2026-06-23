@@ -17,5 +17,6 @@ Open `http://localhost:5173` in a browser.
 - Paste an image from the clipboard
 - Capture the screen from the browser
 - Select four corners by dragging points
+- Auto-detect a likely slide area with a lightweight brightness-based heuristic
 - Choose auto, 16:9, 4:3, or custom output size
 - Save the perspective-corrected PNG
