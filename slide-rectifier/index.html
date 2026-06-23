@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Slide Rectifier</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <p>Local Perspective Tool</p>
+        <h1>Slide Rectifier</h1>
+      </div>
+      <div class="header-actions">
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <button id="sampleBtn" type="button" title="샘플 이미지">샘플</button>
+        <button id="openBtn" type="button" title="이미지 열기">열기</button>
+        <button id="pasteBtn" type="button" title="클립보드 이미지 붙여넣기">붙여넣기</button>
+        <button id="captureBtn" type="button" title="화면 캡처">캡처</button>
+        <button id="resetBtn" type="button" title="초기화">초기화</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="source-panel" aria-label="원본">
+        <div class="panel-head">
+          <div>
+            <h2>원본</h2>
+            <p id="sourceMeta">이미지 없음</p>
+          </div>
+          <div class="status" id="statusText">이미지를 불러오세요.</div>
+        </div>
+        <div class="canvas-frame source-frame">
+          <canvas id="sourceCanvas" aria-label="원본 이미지 선택 영역"></canvas>
+        </div>
+      </section>
+
+      <aside class="tool-panel" aria-label="도구">
+        <section class="controls">
+          <h2>선택</h2>
+          <div class="point-list" id="pointList"></div>
+          <div class="button-row">
+            <button id="clearPointsBtn" type="button">점 지우기</button>
+            <button id="autoFrameBtn" type="button">기본 영역</button>
+          </div>
+        </section>
+
+        <section class="controls">
+          <h2>출력</h2>
+          <label>
+            <span>비율</span>
+            <select id="aspectMode">
+              <option value="auto">자동</option>
+              <option value="16:9">16:9</option>
+              <option value="4:3">4:3</option>
+              <option value="custom">직접 입력</option>
+            </select>
+          </label>
+          <div class="size-grid">
+            <label>
+              <span>너비</span>
+              <input id="outputWidth" type="number" min="64" max="5000" step="1">
+            </label>
+            <label>
+              <span>높이</span>
+              <input id="outputHeight" type="number" min="64" max="5000" step="1">
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="rectifyBtn" class="primary" type="button">변환</button>
+            <button id="downloadBtn" type="button" disabled>PNG 저장</button>
+          </div>
+        </section>
+
+        <section class="result-panel" aria-label="결과">
+          <div class="panel-head compact">
+            <h2>결과</h2>
+            <span id="resultMeta">대기</span>
+          </div>
+          <div class="canvas-frame result-frame">
+            <canvas id="resultCanvas" aria-label="직사각형 변환 결과"></canvas>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
