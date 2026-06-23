@@ -1,4 +1,4 @@
-const SAMPLE_IMAGE = "samples/presentation-sample.png";
+const SAMPLE_IMAGE = "samples/presentation-sample.png?v=20260623-sample2";
 const MAX_SOURCE_SIDE = 2200;
 const MAX_AUTO_OUTPUT_SIDE = 1800;
 
@@ -135,13 +135,13 @@ function applyDefaultFrame() {
 
 function applySampleFrame() {
   if (!state.imageCanvas || state.imageName !== "presentation-sample.png") return false;
-  const scaleX = state.imageCanvas.width / 1378;
-  const scaleY = state.imageCanvas.height / 864;
+  const scaleX = state.imageCanvas.width / 1117;
+  const scaleY = state.imageCanvas.height / 714;
   state.points = [
-    { x: 143 * scaleX, y: 18 * scaleY },
-    { x: 1265 * scaleX, y: 268 * scaleY },
-    { x: 1356 * scaleX, y: 837 * scaleY },
-    { x: 63 * scaleX, y: 773 * scaleY }
+    { x: 136 * scaleX, y: 15 * scaleY },
+    { x: 1017 * scaleX, y: 239 * scaleY },
+    { x: 1084 * scaleX, y: 663 * scaleY },
+    { x: 75 * scaleX, y: 604 * scaleY }
   ];
   state.activeIndex = -1;
   setStatus("Sample selection is ready.");
