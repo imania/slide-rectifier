@@ -1,0 +1,4 @@
+interface:
+  display_name: "틀린그림찾기"
+  short_description: "두 이미지의 픽셀 차이를 찾아 빨간 원으로 표시"
+  default_prompt: "$spot-the-difference 스킬로 두 그림의 다른 부분을 찾아 원본 픽셀을 보존한 채 빨간 원으로 표시해 주세요."
